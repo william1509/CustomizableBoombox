@@ -1,2 +1,2 @@
-# LethalCompanyTemplate
-A template for a BepInEx 5 Plugin, using the correct .csproj configuration for Lethal Company modding
+# Customizable Boombox
+Heavily inspired by https://github.com/steven4547466/YoutubeBoombox (99% the same except for some bug fixes left and right)

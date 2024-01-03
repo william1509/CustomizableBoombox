@@ -1,0 +1,10 @@
+{
+  "name": "CustomizbleBoombox",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/william1509/CustomizableBoombox",
+  "description": "Allows you to upload a youtube video or playlist link. Press B while holding a boombox to open up the control panel",
+  "dependencies": [
+    "BepInEx-BepInExPack-5.4.2100",
+    "2018-LC_API-3.2.3"
+  ]
+}

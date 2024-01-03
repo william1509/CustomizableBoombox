@@ -56,18 +56,6 @@ namespace YoutubeBoombox
 
         public void Update()
         {
-            if (StartOfRound.Instance == null)
-            {
-                DebugLog($"Null instance", EnableDebugLogs.Value);
-            }
-            if (StartOfRound.Instance.localPlayerController == null)
-            {
-                DebugLog($"Null local", EnableDebugLogs.Value);
-            }
-            if (Keyboard.current[CustomBoomboxButton.Value] == null)
-            {
-                DebugLog($"Null keyboard current", EnableDebugLogs.Value);
-            }
             if (StartOfRound.Instance != null 
                 && StartOfRound.Instance.localPlayerController.currentlyHeldObjectServer == Boombox 
                 && Keyboard.current[CustomBoomboxButton.Value].wasPressedThisFrame && !IsGUIShowing())
@@ -128,7 +116,7 @@ namespace YoutubeBoombox
             {
                 return;
             }
-
+            // Tells which client is calling this method
             ulong sender = serverRpcParams.Receive.SenderClientId;
             DebugLog($"Client needed to be ready {ClientsNeededToBeReady}", EnableDebugLogs.Value);
 
@@ -300,6 +288,7 @@ namespace YoutubeBoombox
             IAmReadyServerRpc();
         }
 
+        [ClientRpc]
         public void IncrementPlaylistIndex()
         {
             if (CurrentId == null)
