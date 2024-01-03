@@ -4,27 +4,15 @@ using YoutubeDLSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using UnityEngine;
-using UnityEngine.Networking;
-using System.Collections;
 using GameNetcodeStuff;
 using Unity.Netcode;
 using System.Reflection.Emit;
-using UnityEngine.Pool;
-using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
-using UnityEngine.EventSystems;
-using System.ComponentModel;
-using Newtonsoft.Json.Linq;
 using BepInEx.Configuration;
-using YoutubeDLSharp.Metadata;
-using System.Security.Policy;
 using Newtonsoft.Json;
 using System.Reflection;
-using System.Collections.Specialized;
 using YoutubeBoombox.Providers;
 using System.Diagnostics;
 
@@ -67,7 +55,7 @@ namespace YoutubeBoombox
         }
     }
 
-    [BepInPlugin("steven4547466.YoutubeBoombox", "Youtube Boombox", "1.5.0")]
+    [BepInPlugin("marino1509.CustomizableBoombox", "Customizable Boombox", "1.0.0")]
     [BepInDependency("LC_API")]
     public class YoutubeBoombox : BaseUnityPlugin
     {
@@ -109,7 +97,8 @@ namespace YoutubeBoombox
 
         public static void DebugLog(object data, bool shouldLog = true)
         {
-            if (shouldLog)
+            //if (shouldLog)
+            if (true)
             {
                 Singleton.Logger.LogInfo(data);
             }
@@ -134,7 +123,7 @@ namespace YoutubeBoombox
                 Directory.Delete(oldDirectoryPath, true);
             }
 
-            DirectoryPath = Path.Combine(Paths.PluginPath, "steven4547466-YoutubeBoombox", "data");
+            DirectoryPath = Path.Combine(Paths.PluginPath, "marino1509.CustomizableBoombox", "data");
             DownloadsPath = Path.Combine(DirectoryPath, "Downloads");
 
             if (!Directory.Exists(DirectoryPath)) Directory.CreateDirectory(DirectoryPath);
@@ -158,7 +147,7 @@ namespace YoutubeBoombox
 
             YoutubeDL.OutputFileTemplate = "%(id)s.%(ext)s";
 
-            Harmony = new Harmony($"steven4547466.YoutubeBoombox-{DateTime.Now.Ticks}");
+            Harmony = new Harmony($"marino1509.CustomizableBoombox-{DateTime.Now.Ticks}");
 
             Harmony.PatchAll();
 
@@ -299,12 +288,41 @@ namespace YoutubeBoombox
             internal static YoutubeBoomboxGUI ShownGUI { get; set; }
             internal static BoomboxItem CurrentBoombox { get; set; }
 
-            public static bool Prefix(BoomboxItem __instance)
+            public static bool Prefix(BoomboxItem __instance, bool startMusic, bool pitchDown)
             {
-                if (__instance.TryGetComponent(out BoomboxController controller) && controller.IsGUIShowing())
+                if (__instance.TryGetComponent(out BoomboxController controller))
+                {
+                    DebugLog($"Start music {startMusic}");
+                    controller.ToggleBoombox(startMusic, pitchDown);
                     return false;
 
+                }
+
                 return true;
+            }
+        }
+
+        [HarmonyPatch(typeof(BoomboxItem), nameof(BoomboxItem.PocketItem))]
+        internal class BoomboxItem_PocketItem
+        {
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                var patchedInstructions = instructions.ToList();
+                var skippedFirstCall = false;
+                for (int i = 0; i < patchedInstructions.Count; i++)
+                {
+                    if (!skippedFirstCall)
+                    {
+                        if (patchedInstructions[i].opcode == OpCodes.Call)
+                            skippedFirstCall = true;
+
+                        continue;
+                    }
+
+                    if (patchedInstructions[i].opcode == OpCodes.Ret) break;
+                    patchedInstructions[i].opcode = OpCodes.Nop;
+                }
+                return patchedInstructions;
             }
         }
     }

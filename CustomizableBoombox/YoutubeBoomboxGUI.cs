@@ -1,7 +1,6 @@
 ﻿using GameNetcodeStuff;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -17,7 +16,7 @@ namespace YoutubeBoombox
         private float menuX;
         private float menuY;
 
-        private string url = "Youtube URL";
+        private string url = "";
 
         void Awake()
         {
@@ -31,9 +30,14 @@ namespace YoutubeBoombox
         {
             UnityEngine.Cursor.visible = true;
             UnityEngine.Cursor.lockState = CursorLockMode.Confined;
-            GUI.Box(new Rect(menuX, menuY, menuWidth, menuHeight), "Youtube Boombox");
-            url = GUI.TextField(new Rect(menuX + 25, menuY + 20, menuWidth - 50, 50), url);
 
+            GUI.Box(new Rect(menuX, menuY, menuWidth, menuHeight), "Youtube Boombox");
+            url = GUI.TextField(new Rect(menuX + 25, menuY + 20, menuWidth - 125, 50), url);
+
+            if (GUI.Button(new Rect(menuX + menuWidth - 75, menuY + 20, 50, 50), "Paste")) 
+            {
+                url = GUIUtility.systemCopyBuffer;
+            }
             if (GUI.Button(new Rect(menuX + 25, menuY + 50 + 50, menuWidth - 50, 50), "Play"))
             {
                 if (gameObject.TryGetComponent(out BoomboxController controller))

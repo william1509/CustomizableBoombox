@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security.Policy;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using Unity.Netcode;
@@ -39,19 +39,35 @@ namespace YoutubeBoombox
 
         private NetworkList<ulong> ClientsNeededToBeReady { get; } = new NetworkList<ulong>();
 
+        private bool isBoomboxActive { get; set; }
+
         public void Awake()
         {
             Boombox = GetComponent<BoomboxItem>();
+            Boombox.musicAudios = null;
         }
 
         public void Start()
         {
             DebugLog($"Boombox started client: {IsClient} host: {IsHost} server: {IsServer}", EnableDebugLogs.Value);
+            ClientsNeededToBeReady.Initialize(this);
             IHaveTheModServerRpc();
         }
 
         public void Update()
         {
+            if (StartOfRound.Instance == null)
+            {
+                DebugLog($"Null instance", EnableDebugLogs.Value);
+            }
+            if (StartOfRound.Instance.localPlayerController == null)
+            {
+                DebugLog($"Null local", EnableDebugLogs.Value);
+            }
+            if (Keyboard.current[CustomBoomboxButton.Value] == null)
+            {
+                DebugLog($"Null keyboard current", EnableDebugLogs.Value);
+            }
             if (StartOfRound.Instance != null 
                 && StartOfRound.Instance.localPlayerController.currentlyHeldObjectServer == Boombox 
                 && Keyboard.current[CustomBoomboxButton.Value].wasPressedThisFrame && !IsGUIShowing())
@@ -62,6 +78,21 @@ namespace YoutubeBoombox
 
                 DisableControls();
             }
+        }
+
+        public void ToggleBoombox(bool toggle, bool pitchDown)
+        {
+            DebugLog($"Toggle {toggle}");
+            isBoomboxActive = toggle;
+            if (toggle)
+            {
+                IncrementPlaylistIndex();
+                return;
+            }
+            DebugLog($"StopMusicServerRpc");
+
+            StopMusicServerRpc(pitchDown);
+
         }
 
         private void DisableControls()
@@ -93,9 +124,13 @@ namespace YoutubeBoombox
         {
             DebugLog($"Regsitering mod server rpc called", EnableDebugLogs.Value);
 
-            if (!IsServer) return;
+            if (!IsServer)
+            {
+                return;
+            }
 
             ulong sender = serverRpcParams.Receive.SenderClientId;
+            DebugLog($"Client needed to be ready {ClientsNeededToBeReady}", EnableDebugLogs.Value);
 
             if (!ClientsNeededToBeReady.Contains(sender))
             {
@@ -267,8 +302,13 @@ namespace YoutubeBoombox
 
         public void IncrementPlaylistIndex()
         {
-            DebugLog($"Incrementing playlist index.", EnableDebugLogs.Value);
+            if (CurrentId == null)
+            {
+                DebugLog($"Playlist id is null", EnableDebugLogs.Value);
+                return;
+            }
 
+            DebugLog($"Incrementing playlist index.", EnableDebugLogs.Value);
             Boombox.boomboxAudio.Stop();
 
             PlaylistCurrentIndex++;
@@ -289,6 +329,9 @@ namespace YoutubeBoombox
                 else
                 {
                     DebugLog($"Playlist complete!", EnableDebugLogs.Value);
+                    var randomSong = videoIds[UnityEngine.Random.Range(0, videoIds.Count)];
+                    string newPath = Path.Combine(DownloadsPath, $"{randomSong}.mp3");
+                    Boombox.StartCoroutine(LoadSongCoroutine(newPath));
                 }
             } 
             else
@@ -304,6 +347,11 @@ namespace YoutubeBoombox
             while (Boombox.boomboxAudio.isPlaying)
             {
                 yield return new WaitForSeconds(1);
+            }
+
+            if (!isBoomboxActive)
+            {
+                yield break;
             }
             IncrementPlaylistIndex();
         }
